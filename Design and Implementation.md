@@ -6,7 +6,7 @@ By songchaow.
 
 A new app-store like Plugin Manager is planned to be implemented. This tool can reside in Resource Manager(find it in MuseScore menu: Preferences->General->Update translations, or Help->Resource Manager) as a new tab, or just replace the old plugin manager.
 
-In short, two main facilities are covered in this new plugin manager:
+In short, two main facilities are covered:
 
 - (Part I) Automatically install and manage plugin packages from [MuseScore plugin repository](https://musescore.org/en/plugins).
 - (Part II) Traditional facilities for local installed plugins(some of those plugins may be not published online).
