@@ -75,7 +75,7 @@ The text of each item in QListWidget is currently base name of the qml file.
 
   - Like local plugins, one plugin qml corresponds to one item in the left QListWidget.
 
-  Personally I prefer the third choice, as it's flexible for users and relative simpler than the second choice.
+  Personally I prefer the third choice, as it's flexible for users and relative simpler to implement than the second choice.
 
   But the second choice is also considerable if we implement a tree view, displaying all qmls of one package under that package item.
 
@@ -145,17 +145,27 @@ Warnings should be reported if there are conflicts when copying files, such as q
 
 #### Permanent Storage
 
-Not only the downloaded qmls are stored, necessary information about local plugins and plugin packages need to be stored.
+Not only the downloaded qmls are stored, some metadata about local plugins and plugin packages need to be stored.
 
-Currently, MuseScore only stores some information for local plugins in `plugins.xml`(located in C:\\[your username]\AppData\Local\MuseScore\MuseScore3). The xml file only stores the qml file path and flag of whether loaded for each local plugin. After MuseScore is launched, these items will be read into `QList<PluginDescription> _pluginList` in class `PluginManager`. (See [here](https://github.com/musescore/MuseScore/blob/a9df4a02c07cf5666644be620c6b951becedade8/mscore/plugin/pluginManager.cpp#L67))
+Currently, MuseScore only stores metadata for local plugins in `plugins.xml`(located in C:\\[your username]\AppData\Local\MuseScore\MuseScore3). The xml file only stores the qml file path and flag of whether loaded for each local plugin. After MuseScore is launched, these items will be read into `QList<PluginDescription> _pluginList` in class `PluginManager`. (See [here](https://github.com/musescore/MuseScore/blob/a9df4a02c07cf5666644be620c6b951becedade8/mscore/plugin/pluginManager.cpp#L67))
 
-Qml files of plugin packages should also be added into `plugins.xml`. But beyond that, for each plugin package downloaded from repository, additional information should be maintained:
+Qml files of plugin packages should also be added into `plugins.xml`. 
 
-- plugin package name or page URL. These are helpful to identify installed plugin package from the plugin list fetched from repository. (We cannot tell it merely from installed qml files.)
+But beyond that, for each plugin package downloaded from repository, additional metadata should be maintained:
+
+- plugin package name or plugin page URL. These are helpful to identify installed plugin package from the plugin list fetched from repository. (We cannot tell it merely from installed qml files.)
 
 - Paths of its qml files. This can be obtained after download/extracting the zip file. Those paths are useful when checking the integrity of local plugin packages and removing packages.
 
-These information can be saved in a separate xml file.
+- Direct download link of plugin package if the package is downloaded from attachments. This field is used for checking updates.
+
+- `Last modified` field of plugin package if applicable. This field is used for checking updates.
+
+  HTTP responses of attachments from musescore.com have this field available in the header.
+
+- Latest commit hash of GitHub repository if applicable. This field is used for checking updates.
+
+These metadata can be saved in a separate xml file.
 
 #### Runtime Data Structure
 
@@ -181,6 +191,16 @@ Compatibility check should happen in two cases:
 
 ### Automatic Update
 
-Most plugins don't have their own version numbers currently. So how to detect updates of plugins seems to be a tough problem. 
+Most plugins don't have their own version numbers currently. ~~So how to detect updates of plugins seems to be a tough problem.~~ 
 
-A stupid way is to download the whole plugin again and look for difference.
+However, there're other ways to check if a particular plugin package has been changed:
+
+- If the download URL has changed in the plugin page, it's reasonable to assume there's an update.
+
+- For plugin files stored in musescore.com, the `Last Modified` field of HTTP Response header is available to check.
+
+  When checking updates, we can send HTTP HEAD requests to those plugins' URLs, If newer `Last Modified` value is found in response, there's probably an update.
+
+- For plugins stored in GitHub, the commit history can be checked via [Github Release APIs](https://developer.github.com/v3/repos/releases). If newer commit logs are found, there's probably an update.
+
+Another stupid way is to download the whole plugin again and look for difference.
