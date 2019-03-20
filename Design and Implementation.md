@@ -31,7 +31,7 @@ All available plugins from the online plugin repository will be displayed in thi
 
 - you can download new plugin packages and install them simply by clicking the "Install" button.
 
-  > For plugins that are incompatible for your MuseScore version, the manager should disable the install button.
+- For plugins that are incompatible for your MuseScore version, the manager should disable the install button normally. But maybe as an advanced mode, the manager can attempt to convert the 2.x plugins to 3.x by simply replacing some statements in qmls. (This effect is limited, but might works sometimes.)
 
 - For downloaded plugin packages, you can enable, disable or delete them by clicking corresponding buttons.
 
