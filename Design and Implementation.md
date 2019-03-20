@@ -31,7 +31,9 @@ All available plugins from the online plugin repository will be displayed in thi
 
 - you can download new plugin packages and install them simply by clicking the "Install" button.
 
-- For plugins that are incompatible for your MuseScore version, the manager should disable the install button normally. But maybe as an advanced mode, the manager can attempt to convert the 2.x plugins to 3.x by simply replacing some statements in qmls. (This effect is limited, but might works sometimes.)
+- For plugins that are incompatible for your MuseScore version(3.x), the manager should disable the install button normally.
+
+  But maybe as an advanced mode, users can force the manager to download 2.x plugin packages and attempt to convert them to 3.x. (The converting method is described in "Implementation" part.)
 
 - For downloaded plugin packages, you can enable, disable or delete them by clicking corresponding buttons.
 
@@ -54,6 +56,8 @@ The text of each item in QListWidget is currently base name of the qml file.
 - In addition to using Part I's facility, you can still manually download the qml file yourself or write your own plugin qmls locally, and copy them to plugin directory. Then they will appear after reloading.
 
 - If local plugins are checked to be incompatible, necessary prompts can be added. 
+
+  Maybe as an advanced mode, the manager can offer the attempt to convert 2.x plugins to 3.x ones. (The converting method is described in "Implementation" part)
 
 - The traditional plugin manager's facilities will be reserved in this tab, including:
 
@@ -171,15 +175,13 @@ These metadata can be saved in a separate xml file.
 
 Currently MuseScore uses `QList<PluginDescription> PluginManager::_pluginList` to maintain local plugins. When MuseScore launches, it fills this QList with contents from `plugins.xml`, and loads and registers plugins that are marked to load.
 
-For plugin packages, there ought to be a new `QList<PluginPackage>` to maintain installed plugin packages. `PluginPackage` will be a structure that contains package identiity(name or URL), and an array of paths of its qml files. 
+For plugin packages, there ought to be a new `QList<PluginPackage>` to maintain installed plugin packages. `PluginPackage` will be a structure that contains metadata described in section *Permanent Storage*(package name/page URL,  paths of its qml files and timestamps).
 
 This QList is also filled with contents from corresponding xml file. When the plugin manager is launched, integrities of each `PluginPackage` are checked by verifying existence of each qml file.
 
 ### Compatibility Check
 
-Each plugin has its API compatibility specified in its web page.
-
-As far as I know, plugins of compatibility 1.x, 2.x and 3.x can only be run on MuseScore 1.x, 2.x and 3.x respectively. Though some of 2.x plugins can be ported to 3.x with some code changes, this process cannot be done automagically yet.
+Each plugin has its API compatibility specified in its web page. Plugins of compatibility 1.x, 2.x and 3.x can only be run on MuseScore 1.x, 2.x and 3.x respectively.
 
 Compatibility check should happen in two cases:
 
@@ -188,6 +190,15 @@ Compatibility check should happen in two cases:
 - When importing/reloading local plugins, check whether the plugin is imported successfully.
 
   this can be done by analyzing the result of `QQmlComponent::create()`. See [example code](https://github.com/musescore/MuseScore/blob/1d5ae8afbb4b83b36558c1e365e8794d170d5065/mscore/plugin/mscorePlugins.cpp#L91), where the `errors()` method contains related info.
+
+#### Try to Convert the 2.x Plugin
+
+ Some of 2.x plugins can be converted to 3.x with some code changes, ~~this process cannot be done automagically yet~~. The plugin manager can try doing this job by applying the following two replacements in qml files:
+
+- from `import MuseScore 1.0` to `import MuseScore 3.0`
+- from `import FileIO 1.0` to `import FileIO 3.0`
+
+The effect may be limited, but might works sometimes.
 
 ### Automatic Update
 
