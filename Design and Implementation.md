@@ -43,8 +43,6 @@ All 3.x-compatible plugins from the online plugin repository should be displayed
 
 - after one plugin archive is downloaded, the manager will check if there exist qml files that have the same name with the ones in the archive, and if yes, offer the options to replace existing files, abort installing or duplicate the files.
 
-- Since some plugin packages may contain both 2.x and 3.x qml files in one single archive(such as [this one](https://github.com/Marta-Morticia/MSP-Repeating-bars-coloring)), it would be nice to let the user select what qml files are needed to reserve and discard those unwanted qml files before installing them to MuseScore's plugin directory.
-
 - For installed plugin packages, an "Update" button will appear disabled. The manager should check whether they are up-to-date regularly in the background. And enable the "Update" button for each package when an update is available.
 
 - For installed plugin packages, you can enable, disable or uninstall them by clicking corresponding buttons.
