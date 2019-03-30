@@ -6,6 +6,8 @@ By songchaow.
 
 A new app-store like Plugin Manager is planned to be implemented. This tool can reside in Resource Manager(find it in MuseScore menu: Preferences->General->Update translations, or Help->Resource Manager) as a new tab, or just replace the old plugin manager.
 
+This section explains the behaviors that the user will see when using the new plugin manager.
+
 In short, two main facilities are covered:
 
 - (Part I) Automatically install and manage plugin packages from [MuseScore plugin repository](https://musescore.org/en/plugins).
@@ -25,7 +27,7 @@ UI demo from [a basic implementation](https://github.com/musescore/MuseScore/pul
 
 All 3.x-compatible plugins from the online plugin repository should be displayed in this table. 
 
-> But maybe as an advanced mode, users can force the manager to display 2.x plugin packages and ask the manager to convert them to 3.x. (The converting method is described in "Implementation" part.)
+> But maybe as an advanced mode, users can force the manager to display 2.x plugin packages and download them as usual. The manager may try to convert them afterwards. (The converting method is described in "Implementation" part.)
 
 **Possible features:**
 
@@ -93,6 +95,10 @@ The text of each item in QListWidget is currently base name of the qml file.
 
   But the second choice is also considerable if we implement a tree view, displaying all qmls of one package under that package item.
 
+  Following is a UI demo using the tree view, which integrates local standalone qml files and plugin packages downloaded from plugin store.
+
+  ![tree view](ui_tree_view.png)
+
 ### Miscellaneous
 
 - some blocking methods(`displayingLanguages` and `displayExtensions`) are called in Resource Manager's constructor. So Resource Manager will not open before download completes, which could be a rather long process. To solve this, we can move the blocking methods in a separate thread.
@@ -135,13 +141,41 @@ Each entry of the plugin list should contain:
 
 The class `PluginPackageMeta` in the [draft implementation](<https://github.com/musescore/MuseScore/blob/96196532ca68ca6ded2f009ac9c2da0113b891b1/mscore/plugin/pluginManager.h#L33>) reflects this structure.
 
-### Download
+### Analyzing the plugin page and download link
 
 Then when we click on `Install` button of any entry of plugin, the crawler will fetch the plugin page.
 
-If GitHub repo links are found in the page HTML, [Github Release APIs](https://developer.github.com/v3/repos/releases) should be used to further fetch the package info.
+The plugin may be stored either from GitHub or attachments, both of which should be checked.
 
-Else, look for direct links in the page or the attachments.
+#### From GitHub
+
+If GitHub repo links are found in the plugin page HTML, further determine whether to download from a release or from a branch,
+
+Usually GitHub releases are believed to be more reliable, so  we should always choose the release if there is one. [Github Release APIs](https://developer.github.com/v3/repos/releases) should be used to further fetch the direct download address and the release ID.
+
+If GitHub releases don't exist, download from a suitable branch that corresponds to the latest version. The process of determining the correct branch seems to be easy: many plugin repos would have branches like `master`, `2.x` or `3.x`. A plausible approach is to select a branch that contains "3.x", or select "master" if there are not `3.x`  branches.
+
+#### From attachments
+
+Look for direct links in the page or the attachments.
+
+The attachments in the page could have various names and various kinds of description around them.
+
+Therefore, this step would require sophisticated pattern recognizing algorithms to choose download links of the correct version(2.x or 3.x, etc. ), which is quite time-consuming and can be further discussed and optimized later.
+
+#### Determine whether to download from GitHub or attatchments
+
+Maybe GitHub repos are supposed to be more preferred since they keep version info like commit history and release IDs, which can be used for checking update.
+
+But sometimes for some plugins we do need to download from musescore.org, since the GitHub repo contains a **wrong** version(1.x or 2.x ones). See these plugin pages for example:
+
+<https://musescore.org/en/project/check-parallel-fifths-and-octaves>
+
+<https://musescore.org/en/project/check-harmony-rules>
+
+So the logic to judge between GitHub or attachments should be added and refined later.
+
+
 
 Finally, structured description of this package will be recorded, including:
 
@@ -152,9 +186,11 @@ Finally, structured description of this package will be recorded, including:
 
 The class `PluginPackageDescription` in the [draft implementation](<https://github.com/musescore/MuseScore/blob/96196532ca68ca6ded2f009ac9c2da0113b891b1/mscore/plugin/pluginManager.h#L54>) reflects this structure.
 
-> This fetch procedure can also be considered to run automagically in the background, as the total number of plugins is not huge.
+<!--This analyzing procedure can also be considered to run automagically in the background, no matter whether the user is intending to download, since it won't make much cost in storage and the total number of plugins is not huge.-->
 
-**These steps would require sophisticated pattern recognizing algorithms to choose download links of the correct version(2.x or 3.x, etc. ), which can be further discussed and optimized later.**
+### Download
+
+Download via the link analyzed above.
 
 When downloading files from musescore.org,  `Last Modified` field from the HTTP response should also be added to the description of the package, this field is used for checking updates.
 
@@ -231,9 +267,9 @@ Each plugin has its API compatibility specified in its web page. Plugins of comp
 
 Compatibility check should happen in two cases:
 
-- When installing plugins from repository, before the download begins, compatibility list specified in the plugin web page should be verified against current MuseScore version. If current MuseScore version is not in the list, download will be disabled.
+- When installing plugins from repository, before the download begins, compatibility list specified in the plugin web page should be verified against current MuseScore version. Normally 2.x plugin packages won't be shown in the list.
 
-- When importing/reloading local plugins, check whether the plugin is imported successfully.
+- When registering local plugins, check whether the plugin is registered successfully.
 
   this can be done by analyzing the result of `QQmlComponent::create()`. See [example code](https://github.com/musescore/MuseScore/blob/1d5ae8afbb4b83b36558c1e365e8794d170d5065/mscore/plugin/mscorePlugins.cpp#L91), where the `errors()` method contains related info.
 
@@ -245,6 +281,8 @@ Compatibility check should happen in two cases:
 - from `import FileIO 1.0` to `import FileIO 3.0`
 
 The effect may be limited, but might works sometimes.
+
+The conversion can happen after the plugin failed to be registered.
 
 ### Automatic Update
 
