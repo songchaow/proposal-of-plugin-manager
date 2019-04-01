@@ -11,7 +11,7 @@ This section explains the behaviors that the user will see when using the new pl
 In short, two main facilities are covered:
 
 - (Part I) Automatically install and manage plugin packages from [MuseScore plugin repository](https://musescore.org/en/plugins).
-- (Part II) Traditional facilities for local installed plugins(some of those plugins may be not published online).
+- (Part II) Traditional facilities and improvements for local installed plugins(some of those plugins may be not published online).
 
 > Here I refer to the stuff you download from the plugin repository as a "**plugin package**". 
 >
@@ -33,7 +33,7 @@ All 3.x-compatible plugins from the online plugin repository should be displayed
 
 - you can search for new plugin packages and filter them by category labels.
 
-- you can download new plugin packages and install them simply by clicking the "Install" button.
+- you can (un)install new plugin packages simply by clicking the corresponding button.
 
 - The manager should be able to check whether each package has been installed, and display "Install" or "Uninstall" buttons according to the info.
 
@@ -45,7 +45,7 @@ All 3.x-compatible plugins from the online plugin repository should be displayed
 
 - For installed plugin packages, an "Update" button will appear disabled. The manager should check whether they are up-to-date regularly in the background. And enable the "Update" button for each package when an update is available.
 
-- For installed plugin packages, you can enable, disable or uninstall them by clicking corresponding buttons.
+- ~~For installed plugin packages, you can enable, disable or uninstall them by clicking corresponding buttons.~~(Moved to Part II)
 
   > These operation applies to all qmls that belong to the plugin package. 
   >
@@ -55,7 +55,7 @@ All 3.x-compatible plugins from the online plugin repository should be displayed
 
 Conceptual UI demo I made by merely modifying the UI file:
 
-![ui demo](ui_local_plugin.png)
+![ui demo](ui_local_plugin_new.png)
 
 All installed plugins, at least for qmls that you manually added, will be displayed in the left QListWidget.
 
@@ -89,7 +89,7 @@ The text of each item in QListWidget is currently base name of the qml file.
 
   - Like local plugins, one plugin qml corresponds to one item in the left QListWidget.
 
-  Personally I prefer the third choice, as it's flexible for users and relative simpler to implement than the second choice.
+  Personally I prefer the third choice, as it's flexible for users and relatively simpler to implement than the second choice.
 
   But the second choice is also considerable if we implement a tree view, displaying all qmls of one package under that package item.
 
@@ -161,7 +161,7 @@ The attachments in the page could have various names and various kinds of descri
 
 Therefore, this step would require sophisticated pattern recognizing algorithms to choose download links of the correct version(2.x or 3.x, etc. ), which is quite time-consuming and can be further discussed and optimized later.
 
-#### Determine whether to download from GitHub or attatchments
+#### Determine whether to download from GitHub or attachments
 
 Maybe GitHub repos are supposed to be more preferred since they keep version info like commit history and release IDs, which can be used for checking update.
 
@@ -171,16 +171,16 @@ But sometimes for some plugins we do need to download from musescore.org, since 
 
 <https://musescore.org/en/project/check-harmony-rules>
 
-So the logic to judge between GitHub or attachments should be added and refined later.
+So the logic to select between GitHub or attachments should be added and refined later.
 
 
 
-Finally, structured description of this package will be recorded, including:
+Finally, structured description of this plugin package will be recorded, including:
 
 - GitHub repo URL(if applicable).
 - URLs that are recognized to be downloadable links for proper plugin archives or qml file.
 - latest commit hash of of corresponding branch on GitHub if applicable, this field is used for checking updates.
-- latest release ID of GitHub releases if applicable, this field is used for checking updates, this field is used for checking updates.
+- latest release ID of GitHub releases if applicable, this field is used for checking updates.
 
 The class `PluginPackageDescription` in the [draft implementation](<https://github.com/musescore/MuseScore/blob/96196532ca68ca6ded2f009ac9c2da0113b891b1/mscore/plugin/pluginManager.h#L54>) reflects this structure.
 
@@ -215,7 +215,11 @@ Following filetypes are necessary to be reserved:
 
 The file list should be scanned for these filetypes.
 
-Then if multiple qml files are found, especially for those that have similar name base(like `color_rep_2x.qml` and `color_rep_3x.qml`), the manager prompts the user to select the qml files they want via a dialog.
+The path of each qml file can be recorded in `PluginPackageDescription`. It's helpful for checking integrity of the plugin.
+
+(Discarded)~~Then if multiple qml files are found, especially for those that have similar name base(like `color_rep_2x.qml` and `color_rep_3x.qml`), the manager prompts the user to select the qml files they want via a dialog.~~
+
+
 
 #### Check duplicated qml files
 
@@ -245,7 +249,7 @@ These metadata can be saved in a separate xml file(currently saved as `pluginpac
 
 Currently MuseScore uses `QList<PluginDescription> PluginManager::_pluginList` to maintain local plugins. When MuseScore launches, it fills this QList with contents from `plugins.xml`, and loads and registers plugins that are marked to load.
 
-For plugin packages, following classes are added:
+For plugins from store, following classes are added:
 
 ```c++
 struct PluginPackageMeta;
@@ -253,9 +257,11 @@ enum PluginPackageSource;
 struct PluginPackageDescription;
 ```
 
-The classes `PluginPackageMeta` and `PluginPackageDescription` are described above. And `PluginPackageSource` is just an enum specifying the source is GitHub, GitHub release or attachment.
+The classes `PluginPackageMeta` and `PluginPackageDescription` are described in previous sections. And `PluginPackageSource` is just an enum class specifying the source is GitHub, GitHub release or attachment.
 
-And there need to be a new `QMap<QString, PluginPackageDescription>` to maintain installed plugin packages, which maps a plugin page url to the description of that package. It is read from `pluginpackages.xml` when the resource manager starts.
+At run time, a `PluginPackageMeta` object is created for each plugin in the list fetched from repository, and a `PluginPackageDescription` object is created for each installed plugin from store.
+
+The objects of `PluginPackageDescription` are read from `pluginpackages.xml` when the resource manager starts.
 
 integrities of each `PluginPackage` are checked by verifying existence of each qml file.
 
@@ -269,7 +275,9 @@ Compatibility check should happen in two cases:
 
 - When registering local plugins, check whether the plugin is registered successfully.
 
-  this can be done by analyzing the result of `QQmlComponent::create()`. See [example code](https://github.com/musescore/MuseScore/blob/1d5ae8afbb4b83b36558c1e365e8794d170d5065/mscore/plugin/mscorePlugins.cpp#L91), where the `errors()` method contains related info.
+  Currently, registrations of incompatible plugins will silently fail, and no buttons will be displayed for those plugins. This can be improved by reporting whether the plugin is compatible explicitly.
+
+  The result of registration is contained in the return object of `QQmlComponent::create()`. See [example code](https://github.com/musescore/MuseScore/blob/1d5ae8afbb4b83b36558c1e365e8794d170d5065/mscore/plugin/mscorePlugins.cpp#L91), where the `errors()` method contains related info.
 
 #### Try to Convert the 2.x Plugin
 
