@@ -17,5 +17,5 @@ Here is a list of plugin packages that the manager failed to download or encount
 | <https://musescore.org/en/project/quarter-tone-24-tet-tuning> | Not implemented for links from musescore.com                 |
 | <https://musescore.org/en/project/repeating-bars-coloring>   | Both 2.x and 3.x versions are downloaded. They are in the same repo |
 | <https://musescore.org/en/project/tunings-and-temperaments>  | The GitHub repo contains multiple plugins.                   |
-| <https://musescore.org/en/project/reset-dialog-positions>    | Some GitHub repo URLs are wrong in the plugin page. GitHub release was not supported. |
+| <https://musescore.org/en/project/reset-dialog-positions>    | Some GitHub repo URLs are wrong in the plugin page. |
 
