@@ -1,6 +1,6 @@
 ## Failed Plugin List
 
-Here is a list of plugin packages that the manager failed to download or encountered errors.
+Here is a list of plugin packages that the manager failed to download or encountered errors. Plugins that are not listed here all get passed.
 
 | Package                                                      | Status                                                       |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
